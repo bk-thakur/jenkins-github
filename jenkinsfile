@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'thakurbk123/testimage:latest'
+    }
+
+    stages {
+        stage('Clone') {
+            steps {
+                git 'https://github.com/bk-thakur/jenkins-github.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh 'docker build -t $IMAGE_NAME .'
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    script {
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        sh 'docker push $IMAGE_NAME'
+                    }
+                }
+            }
+        }
+    }
+}
